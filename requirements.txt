@@ -1,0 +1,8 @@
+# testing
+nose==1.3.7
+tox==2.1.1
+coverage==4.3.4
+flake8
+black
+
+-e .

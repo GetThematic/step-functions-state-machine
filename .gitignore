@@ -1,0 +1,13 @@
+env/
+.coverage
+.noseids
+coverage.xml
+nosetests.xml
+ghostdriver.log
+*.egg-info/
+
+*.pyc
+.DS_Store
+
+
+tests/data/benchmarks

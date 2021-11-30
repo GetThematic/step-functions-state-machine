@@ -1,0 +1,23 @@
+{
+    "python.pythonPath": "${workspaceRoot}/env/bin/python",
+    "python.testing.nosetestsEnabled": true,
+    "python.testing.nosetestArgs": [
+        "--with-xunit",
+        "--with-coverage",
+        "--cover-xml",
+        "--cover-inclusive",
+        "--cover-erase",
+        "-s"
+    ],
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": true,
+    "python.linting.enabled": true,
+    "python.linting.flake8Args": [
+        "--max-line-length=160"
+    ],
+    "editor.formatOnSave": true,
+    "python.formatting.provider": "black",
+    "python.formatting.blackArgs": [
+        "--line-length=160"
+    ],
+}
