@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name="step_functions_state_machine",
+    name="step_functions_local",
     version="1.0.0",
     author="Thematic Ltd",
     author_email="contact@getthematic.com",
