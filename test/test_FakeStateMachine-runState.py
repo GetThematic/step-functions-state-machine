@@ -24,7 +24,7 @@ def test_runstate():
 
     # when the state has `"End": True`
     # should be marked as a terminal state
-    definition = load_fixture("./fixtures/definitions/state-with-end-is-True.json")
+    definition = load_fixture("./fixtures/definitions/state-with-end-is-true.json")
     state_machine = step_functions_local.StateMachine(definition, {})
     assert state_machine._runState(
         {
