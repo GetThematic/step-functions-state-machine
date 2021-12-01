@@ -10,5 +10,5 @@ setup(
     description="",
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     include_package_data=True,
-    install_requires=["jsonschema==2.6.0", "jsonpath-ng==1.5.3"],
+    install_requires=["jsonschema==4.2.1", "jsonpath-ng==1.5.3"],
 )

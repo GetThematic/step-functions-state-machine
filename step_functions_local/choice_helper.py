@@ -1,3 +1,6 @@
+import re
+import datetime
+import fnmatch
 from . import jsonpath
 
 
@@ -8,220 +11,199 @@ class ChoiceRule:
 
 
 def isRightChoice(choice, data):
-    if choice["Not"]:
-        return not isRightChoice(choice["Not"], data)
+    if choice.get("Not"):
+        return not isRightChoice(choice.get("Not"), data)
 
-    if choice["Or"]:
-        return any([isRightChoice(x) for x in choice["Or"]])
+    if choice.get("Or"):
+        return any([isRightChoice(x, data) for x in choice.get("Or")])
 
-    if choice["And"]:
-        return all([isRightChoice(x) for x in choice["Or"]])
+    if choice.get("And"):
+        return all([isRightChoice(x, data) for x in choice.get("And")])
 
     return compareChoice(choice, data)
 
 
 def compareChoice(choice, data):
-    value = jsonpath.get_json_value(data, choice["Variable"])
+    value = jsonpath.get_json_value(data, choice.get("Variable"))
 
-    if choice["BooleanEquals"] is not None:
-        return type(value) == bool and type(choice["BooleanEquals"]) == bool and value == choice["BooleanEquals"]
+    if choice.get("BooleanEquals") is not None:
+        return type(value) == bool and type(choice.get("BooleanEquals")) == bool and value == choice.get("BooleanEquals")
 
-    if choice["BooleanEqualsPath"] is not None:
-        compareTo = jsonpath.get_json_value(data, choice["BooleanEqualsPath"])
+    if choice.get("BooleanEqualsPath") is not None:
+        compareTo = jsonpath.get_json_value(data, choice.get("BooleanEqualsPath"))
 
         return type(value) == bool and type(compareTo) == bool and value == compareTo
 
-    if choice["NumericEquals"] is not None:
-        return type(value) in {float, int} and type(choice["NumericEquals)"]) in {float, int} and value == choice["NumericEquals"]
+    if choice.get("NumericEquals") is not None:
+        return type(value) in {float, int} and type(choice.get("NumericEquals")) in {float, int} and float(value) == float(choice.get("NumericEquals"))
 
-    if choice["NumericLessThan"] is not None:
-        return type(value) in {float, int} and type(choice["NumericLessThan)"]) in {float, int} and value < choice["NumericLessThan"]
+    if choice.get("NumericLessThan") is not None:
+        return type(value) in {float, int} and type(choice.get("NumericLessThan")) in {float, int} and float(value) < float(choice.get("NumericLessThan"))
 
-    if choice["NumericGreaterThan"] is not None:
-        return type(value) in {float, int} and type(choice["NumericGreaterThan)"]) in {float, int} and value > choice["NumericGreaterThan"]
+    if choice.get("NumericGreaterThan") is not None:
+        return type(value) in {float, int} and type(choice.get("NumericGreaterThan")) in {float, int} and float(value) > float(choice.get("NumericGreaterThan"))
 
-    if choice["NumericLessThanEquals"] is not None:
-        return type(value) in {float, int} and type(choice["NumericLessThanEquals)"]) in {float, int} and value <= choice["NumericLessThanEquals"]
+    if choice.get("NumericLessThanEquals") is not None:
+        return (
+            type(value) in {float, int}
+            and type(choice.get("NumericLessThanEquals")) in {float, int}
+            and float(value) <= float(choice.get("NumericLessThanEquals"))
+        )
 
-    if choice["NumericGreaterThanEquals"] is not None:
-        return type(value) in {float, int} and type(choice["NumericGreaterThanEquals)"]) in {float, int} and value >= choice["NumericGreaterThanEquals"]
+    if choice.get("NumericGreaterThanEquals") is not None:
+        return (
+            type(value) in {float, int}
+            and type(choice.get("NumericGreaterThanEquals")) in {float, int}
+            and float(value) >= float(choice.get("NumericGreaterThanEquals"))
+        )
 
-    if choice["NumericEqualsPath"] is not None:
-        compareTo = jsonpath.get_json_value(data, choice["NumericEqualsPath"])
+    if choice.get("NumericEqualsPath") is not None:
+        compareTo = jsonpath.get_json_value(data, choice.get("NumericEqualsPath"))
         return type(value) in {float, int} and type(compareTo) in {float, int} and value == compareTo
 
-    if choice["NumericLessThanPath"] is not None:
-        compareTo = jsonpath.get_json_value(data, choice["NumericLessThanPath"])
+    if choice.get("NumericLessThanPath") is not None:
+        compareTo = jsonpath.get_json_value(data, choice.get("NumericLessThanPath"))
         return type(value) in {float, int} and type(compareTo) in {float, int} and value < compareTo
 
-    if choice["NumericGreaterThanPath"] is not None:
-        compareTo = jsonpath.get_json_value(data, choice["NumericGreaterThanPath"])
+    if choice.get("NumericGreaterThanPath") is not None:
+        compareTo = jsonpath.get_json_value(data, choice.get("NumericGreaterThanPath"))
         return type(value) in {float, int} and type(compareTo) in {float, int} and value > compareTo
 
-    if choice["NumericLessThanEqualsPath"] is not None:
-        compareTo = jsonpath.get_json_value(data, choice["NumericLessThanEqualsPath"])
+    if choice.get("NumericLessThanEqualsPath") is not None:
+        compareTo = jsonpath.get_json_value(data, choice.get("NumericLessThanEqualsPath"))
         return type(value) in {float, int} and type(compareTo) in {float, int} and value <= compareTo
 
-    if choice["NumericGreaterThanEqualsPath"] is not None:
-        compareTo = jsonpath.get_json_value(data, choice["NumericGreaterThanEqualsPath"])
+    if choice.get("NumericGreaterThanEqualsPath") is not None:
+        compareTo = jsonpath.get_json_value(data, choice.get("NumericGreaterThanEqualsPath"))
         return type(value) in {float, int} and type(compareTo) in {float, int} and value >= compareTo
 
-    if choice["StringEquals"] is not None:
-        return type(value) == str and type(choice["StringEquals"]) == str and value == choice["StringEquals"]
+    if choice.get("StringEquals") is not None:
+        return type(value) == str and type(choice.get("StringEquals")) == str and value == choice.get("StringEquals")
 
-    if choice["StringLessThan"] is not None:
-        return type(value) == str and type(choice["StringLessThan"]) == str and value < choice["StringLessThan"]
+    if choice.get("StringLessThan") is not None:
+        return type(value) == str and type(choice.get("StringLessThan")) == str and value < choice.get("StringLessThan")
 
-    if choice["StringGreaterThan"] is not None:
-        return type(value) == str and type(choice["StringGreaterThan"]) == str and value > choice["StringGreaterThan"]
+    if choice.get("StringGreaterThan") is not None:
+        return type(value) == str and type(choice.get("StringGreaterThan")) == str and value > choice.get("StringGreaterThan")
 
-    if choice["StringLessThanEquals"] is not None:
-        return type(value) == str and type(choice["StringLessThanEquals"]) == str and value <= choice["StringLessThanEquals"]
+    if choice.get("StringLessThanEquals") is not None:
+        return type(value) == str and type(choice.get("StringLessThanEquals")) == str and value <= choice.get("StringLessThanEquals")
 
-    if choice["StringGreaterThanEquals"] is not None:
-        return type(value) == str and type(choice["StringGreaterThanEquals"]) == str and value >= choice["StringGreaterThanEquals"]
+    if choice.get("StringGreaterThanEquals") is not None:
+        return type(value) == str and type(choice.get("StringGreaterThanEquals")) == str and value >= choice.get("StringGreaterThanEquals")
 
-    if choice["StringEqualsPath"] is not None:
-        compareTo = jsonpath.get_json_value(data, choice["StringEqualsPath"])
+    if choice.get("StringEqualsPath") is not None:
+        compareTo = jsonpath.get_json_value(data, choice.get("StringEqualsPath"))
         return type(value) == str and type(compareTo) == str and value == compareTo
 
-    if choice["StringLessThanPath"] is not None:
-        compareTo = jsonpath.get_json_value(data, choice["StringLessThanPath"])
+    if choice.get("StringLessThanPath") is not None:
+        compareTo = jsonpath.get_json_value(data, choice.get("StringLessThanPath"))
         return type(value) == str and type(compareTo) == str and value < compareTo
 
-    if choice["StringGreaterThanPath"] is not None:
-        compareTo = jsonpath.get_json_value(data, choice["StringGreaterThanPath"])
+    if choice.get("StringGreaterThanPath") is not None:
+        compareTo = jsonpath.get_json_value(data, choice.get("StringGreaterThanPath"))
         return type(value) == str and type(compareTo) == str and value > compareTo
 
-    if choice["StringLessThanEqualsPath"] is not None:
-        compareTo = jsonpath.get_json_value(data, choice["StringLessThanEqualsPath"])
+    if choice.get("StringLessThanEqualsPath") is not None:
+        compareTo = jsonpath.get_json_value(data, choice.get("StringLessThanEqualsPath"))
         return type(value) == str and type(compareTo) == str and value <= compareTo
 
-    if choice["StringGreaterThanEqualsPath"] is not None:
-        compareTo = jsonpath.get_json_value(data, choice["StringGreaterThanEqualsPath"])
+    if choice.get("StringGreaterThanEqualsPath") is not None:
+        compareTo = jsonpath.get_json_value(data, choice.get("StringGreaterThanEqualsPath"))
         return type(value) == str and type(compareTo) == str and value >= compareTo
 
-    # if choice["StringMatches"] is not None:
-    #     return (
-    #   type(value) == str and
-    #   type(choice["StringMatches"]) == str and
-    #   stringMatches(value, choice["StringMatches"])
-    #     )
+    if choice.get("StringMatches") is not None:
+        raise NotImplementedError("stringMatches not yet implemented")
+        # return type(value) == str and type(choice.get("StringMatches")) == str and stringMatches(value, choice.get("StringMatches"))
 
-    # if choice["TimestampEquals"] is not None:
-    #     return (
-    #   isTimestamp(value) and
-    #   isTimestamp(choice["TimestampEquals"]) and
-    #   new Date(value).getTime() == new Date(choice["TimestampEquals"]).getTime()
-    #     )
+    if choice.get("TimestampEquals") is not None:
+        return (
+            is_timestamp(value)
+            and is_timestamp(choice.get("TimestampEquals"))
+            and get_datetime(value).timestamp() == get_datetime(choice.get("TimestampEquals")).timestamp()
+        )
 
-    # if choice["TimestampLessThan"] is not None:
-    #     return (
-    #   isTimestamp(value) and
-    #   isTimestamp(choice["TimestampLessThan"]) and
-    #   new Date(value).getTime() < new Date(choice["TimestampLessThan"]).getTime()
-    #     )
+    if choice.get("TimestampLessThan") is not None:
+        return (
+            is_timestamp(value)
+            and is_timestamp(choice.get("TimestampLessThan"))
+            and get_datetime(value).timestamp() < get_datetime(choice.get("TimestampLessThan")).timestamp()
+        )
 
-    # if choice["TimestampGreaterThan"] is not None:
-    #     return (
-    #   isTimestamp(value) and
-    #   isTimestamp(choice["TimestampGreaterThan"]) and
-    #   new Date(value).getTime() >
-    #     new Date(choice["TimestampGreaterThan"]).getTime()
-    #     )
+    if choice.get("TimestampGreaterThan") is not None:
+        return (
+            is_timestamp(value)
+            and is_timestamp(choice.get("TimestampGreaterThan"))
+            and get_datetime(value).timestamp() > get_datetime(choice.get("TimestampGreaterThan")).timestamp()
+        )
 
-    # if choice["TimestampLessThanEquals"] is not None:
-    #     return (
-    #   isTimestamp(value) and
-    #   isTimestamp(choice["TimestampLessThanEquals"]) and
-    #   new Date(value).getTime() <=
-    #     new Date(choice["TimestampLessThanEquals"]).getTime()
-    #     )
+    if choice.get("TimestampLessThanEquals") is not None:
+        return (
+            is_timestamp(value)
+            and is_timestamp(choice.get("TimestampLessThanEquals"))
+            and get_datetime(value).timestamp() <= get_datetime(choice.get("TimestampLessThanEquals")).timestamp()
+        )
 
-    # if choice["TimestampGreaterThanEquals"] is not None:
-    #     return (
-    #   isTimestamp(value) and
-    #   isTimestamp(choice["TimestampGreaterThanEquals"]) and
-    #   new Date(value).getTime() >=
-    #     new Date(choice["TimestampGreaterThanEquals"]).getTime()
-    #     )
+    if choice.get("TimestampGreaterThanEquals") is not None:
+        return (
+            is_timestamp(value)
+            and is_timestamp(choice.get("TimestampGreaterThanEquals"))
+            and get_datetime(value).timestamp() >= get_datetime(choice.get("TimestampGreaterThanEquals")).timestamp()
+        )
 
-    # if choice["TimestampEqualsPath"] is not None:
-    #     compareTo = jsonpath.get_json_value(data, choice["TimestampEqualsPath"])
-    #     return (
-    #   isTimestamp(value) and
-    #   isTimestamp(compareTo) and
-    #   new Date(value).getTime() == new Date(compareTo).getTime()
-    #     )
+    if choice.get("TimestampEqualsPath") is not None:
+        compareTo = jsonpath.get_json_value(data, choice.get("TimestampEqualsPath"))
+        return is_timestamp(value) and is_timestamp(compareTo) and get_datetime(value).timestamp() == get_datetime(compareTo).timestamp()
 
-    # if choice["TimestampLessThanPath"] is not None:
-    #     compareTo = jsonpath.get_json_value(data, choice["TimestampLessThanPath"])
-    #     return (
-    #   isTimestamp(value) and
-    #   isTimestamp(compareTo) and
-    #   new Date(value).getTime() < new Date(compareTo).getTime()
-    #     )
+    if choice.get("TimestampLessThanPath") is not None:
+        compareTo = jsonpath.get_json_value(data, choice.get("TimestampLessThanPath"))
+        return is_timestamp(value) and is_timestamp(compareTo) and get_datetime(value).timestamp() < get_datetime(compareTo).timestamp()
 
-    # if choice["TimestampGreaterThanPath"] is not None:
-    #     compareTo = jsonpath.get_json_value(data, choice["TimestampGreaterThanPath"])
-    #     return (
-    #   isTimestamp(value) and
-    #   isTimestamp(compareTo) and
-    #   new Date(value).getTime() > new Date(compareTo).getTime()
-    #     )
+    if choice.get("TimestampGreaterThanPath") is not None:
+        compareTo = jsonpath.get_json_value(data, choice.get("TimestampGreaterThanPath"))
+        return is_timestamp(value) and is_timestamp(compareTo) and get_datetime(value).timestamp() > get_datetime(compareTo).timestamp()
 
-    # if choice["TimestampLessThanEqualsPath"] is not None:
-    #     compareTo = jsonpath.get_json_value(data, choice["TimestampLessThanEqualsPath"])
-    #     return (
-    #   isTimestamp(value) and
-    #   isTimestamp(compareTo) and
-    #   new Date(value).getTime() <= new Date(compareTo).getTime()
-    #     )
+    if choice.get("TimestampLessThanEqualsPath") is not None:
+        compareTo = jsonpath.get_json_value(data, choice.get("TimestampLessThanEqualsPath"))
+        return is_timestamp(value) and is_timestamp(compareTo) and get_datetime(value).timestamp() <= get_datetime(compareTo).timestamp()
 
-    # if choice["TimestampGreaterThanEqualsPath"] is not None:
-    #     compareTo = jsonpath.get_json_value(
-    #   data,
-    #   choice["TimestampGreaterThanEqualsPath"]
-    #     )
-    #     return (
-    #   isTimestamp(value) and
-    #   isTimestamp(compareTo) and
-    #   new Date(value).getTime() >= new Date(compareTo).getTime()
-    #     )
+    if choice.get("TimestampGreaterThanEqualsPath") is not None:
+        compareTo = jsonpath.get_json_value(data, choice.get("TimestampGreaterThanEqualsPath"))
+        return is_timestamp(value) and is_timestamp(compareTo) and get_datetime(value).timestamp() >= get_datetime(compareTo).timestamp()
 
     return (
-        choice["IsPresent"] == (value is not None)
-        or choice["IsNone"] == (value is None)
-        or choice["IsBoolean"] == (type(value) == bool)
-        or choice["IsNumeric"] == (type(value) in {float, int})
-        or choice["IsString"] == (type(value) == str)
-        # or choice["IsTimestamp"] == isTimestamp(value)
+        choice.get("IsPresent") == (value is not None)
+        or choice.get("IsNone") == (value is None)
+        or choice.get("IsBoolean") == (type(value) == bool)
+        or choice.get("IsNumeric") == (type(value) in {float, int})
+        or choice.get("IsString") == (type(value) == str)
+        or choice.get("IsTimestamp") == is_timestamp(value)
     )
 
 
-# def stringMatches(value, rule):
-#   def escapeRegex(string):
-#     for c in "[-/^$*+?.()|[]{]":
-#         string = string.replace(c,'\\{}&'.format(c))
-#     return string
+def stringMatches(value, rule):
+    def escapeRegex(string):
+        print(string)
+        return re.sub("[-/^$*+?.()|[]{}]", "\\$&", string)
 
-#   def replaceAsterisk(string):
-#     return string
-#       .split(/(?<!(?:\\))\*/g)
-#       .map(escapeRegex)
-#       .join('.*')
+    def replaceAsterisk(string):
+        print(string)
+        return ".*".join([escapeRegex(x) for x in string.split("*")])
 
-#   testMask = '\\\\'.join([replaceAsterix(x) for x in rule.split("\\\\")])
-
-#   return new RegExp("^{}$".format(testMask)).test(value)
+    test_mask = "\\\\".join([replaceAsterisk(x) for x in rule.split("\\\\")])
+    print("test_mask", test_mask)
+    return re.match(test_mask, value) is not None
 
 
-# def isTimestamp(value):
-#     try:
-#         value = dateutil.parser.isoparse(value)
-#     except:
-#         return False
+def get_datetime(value):
+    try:
+        value = value.replace("Z", "+00:00")
+        value = datetime.datetime.fromisoformat(value)
+    except Exception as e:
+        return None
+    return value
 
-#     if value:
-#         return date.toISOString() == value
-#     return False
+
+def is_timestamp(value):
+    value_converted = get_datetime(value)
+    return value_converted is not None

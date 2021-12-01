@@ -15,13 +15,15 @@ def validate(definition):
         raise Exception("Could not load schema. Error was {}".format(e))
 
     try:
-        resolver = jsonschema.RefResolver("http://asl-validator.cloud/", "http://asl-validator.cloud/")
-        schemas = os.path.join(os.path.dirname(__file__), "data", "asl-schemas")
+        schemas = os.path.join(os.path.dirname(__file__), "data")
+        store = {}
         for fn in os.listdir(schemas):
             path = os.path.join(schemas, fn)
             with open(path, "r") as fh:
                 data = json.load(fh)
-                resolver.store[data.get("id")] = data
+                store[data.get("$id")] = data
+
+        resolver = jsonschema.RefResolver("http://asl-validator.cloud", "http://asl-validator.cloud", store=store)
         jsonschema.validate(definition, schema, resolver=resolver)
     except jsonschema.ValidationError as e:
         raise Exception("Failed schema validation: " + str(e))

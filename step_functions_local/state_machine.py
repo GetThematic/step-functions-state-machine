@@ -1,3 +1,4 @@
+import re
 import copy
 
 from . import choice_helper
@@ -5,11 +6,30 @@ from . import jsonpath
 
 
 class RunStateResult:
-    def __init(self, data, stateType, nextState, isTerminalState):
+    def __init__(self, data, stateType, nextStateName, isTerminalState):
+        if not nextStateName and not isTerminalState:
+            raise Exception("Invalid result")
+
         self.isTerminalState = isTerminalState
-        self.isTerminalState = data
+        self.data = data
         self.stateType = stateType
-        self.nextStateName = nextState
+        self.nextStateName = nextStateName
+
+    def __eq__(self, other):
+        return (
+            self.isTerminalState == other.isTerminalState
+            and self.data == other.data
+            and self.nextStateName == other.nextStateName
+            and self.stateType == other.stateType
+        )
+
+    def __repr__(self):
+        return "stateType: {}, nextStateName: {}, isTermainalState: {}, data: {}".format(
+            self.stateType,
+            self.nextStateName,
+            self.isTerminalState,
+            self.data,
+        )
 
 
 class StateMachine:
@@ -24,26 +44,41 @@ class StateMachine:
         self.resources = resources
 
     def run(self, input):
-        return self._run(input, self.startAt, None)
+        startAt = self.definition.get("StartAt")
+        if not startAt:
+            raise Exception("StartAt does not exist")
+
+        result = self._run(input, startAt, None)
+        print(result.data)
+        return result
 
     def _run(self, data, current, end):
         result = self._runState(data, current)
         if result.isTerminalState or current == end:
             return result
-        return self.runPartial(result.data, result.nextStateName, end)
+        return self._runPartial(result.data, result.nextStateName, end)
+
+    def _runPartial(self, data, current, end):
+        result = self._runState(data, current)
+        if result.isTerminalState or current == end:
+            return result
+        return self._runPartial(result.data, result.nextStateName, end)
 
     # experimental
-    def runCondition(self, data, _condition):
+    def _runCondition(self, data, _condition):
         condition = _condition
-        result = self.runState(data, condition["start"])
-        if result.isTerminalState or condition["start"] == condition["end"] or not result.nextStateName.match(condition.regex):
+        result = self._runState(data, condition["start"])
+        regex = condition.get("regex")
+        if regex:
+            regex = regex[1:-1]  # strip the slashes
+        if result.isTerminalState or condition["start"] == condition.get("end") or (regex and not re.match(regex, result.nextStateName)):
             return result
-        condition.start = result.nextStateName
-        return self.runCondition(result.data, condition)
+        condition["start"] = result.nextStateName
+        return self._runCondition(result.data, condition)
 
-    def runState(self, _data, stateName):
+    def _runState(self, _data, stateName):
         data = copy.deepcopy(_data)
-        state = self.definition.States.get(stateName)
+        state = self.definition["States"].get(stateName)
         if state is None:
             raise Exception("the state {} does not exists".format(stateName))
 
@@ -51,20 +86,20 @@ class StateMachine:
         nextState = state.get("Next")
 
         if stateType == "Task":
-            resource = self.fakeResources.get(state["Resource"])
+            resource = self.resources.get(state["Resource"])
             if resource is None:
                 raise Exception("Unknown resource: {}".format(state["Resource"]))
 
-            newValue = self.runStateTask(state, data, resource)
-            if not state.get["ResultPath"]:
+            newValue = self._runStateTask(state, data, resource)
+            if not state.get("ResultPath"):
                 data = newValue
             else:
-                jsonpath.set_json_value(data, state.get["ResultPath"], newValue)
+                jsonpath.set_json_value(data, state.get("ResultPath"), newValue)
         elif stateType == "Pass":
-            newValue = self.runStatePass(state, data)
-            jsonpath.set_json_value(data, state.get["ResultPath"], newValue)
+            newValue = self._runStatePass(state, data)
+            jsonpath.set_json_value(data, state.get("ResultPath"), newValue)
         elif stateType == "Choice":
-            nextState = self.runStateChoice(state, data)
+            nextState = self._runStateChoice(state, data)
         elif stateType == "Succeed":
             pass
         elif stateType == "Fail":
@@ -80,18 +115,18 @@ class StateMachine:
 
         return RunStateResult(data, stateType, nextState, isTerminalState)
 
-    def runStateTask(self, state, data, resource):
+    def _runStateTask(self, state, data, resource):
         dataInputPath = self.inputData(state, data)
         result = resource(dataInputPath)
         if not result:
             return None
         return copy.deepcopy(result)
 
-    def runStatePass(self, state, data):
+    def _runStatePass(self, state, data):
         dataInputPath = self.inputData(state, data)
         return copy.deepcopy(state.get("Input", dataInputPath))
 
-    def runStateChoice(self, state, data):
+    def _runStateChoice(self, state, data):
         matched = [x for x in state["Choices"] if choice_helper.isRightChoice(x, data)]
         if matched:
             return matched[0]["Next"]

@@ -2,7 +2,4 @@
 set -e
 cd "${BASH_SOURCE%/*}"
 
-nosetests --with-xunit --with-coverage --cover-xml --cover-inclusive \
-    --cover-package=step_functions_local \
-    --cover-erase \
-    . -s -v
+coverage run --source=step_functions_local -m pytest test && coverage report -m
