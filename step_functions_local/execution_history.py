@@ -131,7 +131,7 @@ class ExecutionHistory(object):
         if previous_event_id is None:
             previous_event_id = 0
             if len(self.execution_history):
-                previous_event_id = self.execution_history[-1]["previousEventId"]
+                previous_event_id = self.execution_history[-1]["id"]
         details = {
             "timestamp": datetime.now().timestamp(),
             "id": len(self.execution_history) + 1,
@@ -141,3 +141,6 @@ class ExecutionHistory(object):
         if event_detail_type:
             details[event_detail_type] =  event_details
         self.execution_history.append(details)
+
+    def export(self):
+        return self.execution_history

@@ -47,7 +47,7 @@ class StateMachine:
         self.history = ExecutionHistory()
 
     def getExecutionHistory(self):
-        return self.history.toDict()
+        return self.history.export()
 
     def run(self, input):
         self.history.reset()
