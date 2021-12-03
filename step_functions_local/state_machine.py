@@ -1,7 +1,9 @@
 import re
 import copy
+import datetime
 
 from . import choice_helper
+from .execution_history import ExecutionHistory, EventType
 from . import jsonpath
 
 
@@ -42,14 +44,24 @@ class StateMachine:
         """
         self.definition = definition
         self.resources = resources
+        self.history = ExecutionHistory()
+
+    def getExecutionHistory(self):
+        return self.history.toDict()
 
     def run(self, input):
+        self.history.reset()
         startAt = self.definition.get("StartAt")
         if not startAt:
             raise Exception("StartAt does not exist")
 
-        result = self._run(input, startAt, None)
-        print(result.data)
+        self.history.record(EventType.ExecutionStarted, {"input": input})
+        try:
+            result = self._run(input, startAt, None)
+            self.history.record(EventType.ExecutionSucceeded, {"output": result.data})
+        except Exception as e:
+            self.history.record(EventType.ExecutionFailed, {"error": type(e), "cause": str(e)})
+            raise e
         return result
 
     def _run(self, data, current, end):
@@ -86,8 +98,10 @@ class StateMachine:
         nextState = state.get("Next")
 
         if stateType == "Task":
+            self.history.record(EventType.TaskStateEntered, {"input": data, "name": stateName})
             resource = self.resources.get(state["Resource"])
             if resource is None:
+                self.history.record(EventType.TaskSubmitFailed, {"resource": state["Resource"], "resourceType": state["Resource"], "error": "Unknown resource", "cause": "Unknown resource: {}".format(state["Resource"])})
                 raise Exception("Unknown resource: {}".format(state["Resource"]))
 
             newValue = self._runStateTask(state, data, resource)
@@ -95,16 +109,27 @@ class StateMachine:
                 data = newValue
             else:
                 jsonpath.set_json_value(data, state.get("ResultPath"), newValue)
+
+            self.history.record(EventType.TaskStateExited, {"output": data, "name": stateName})
         elif stateType == "Pass":
+            self.history.record(EventType.PassStateEntered, {"input": data, "name": stateName})
             newValue = self._runStatePass(state, data)
             jsonpath.set_json_value(data, state.get("ResultPath"), newValue)
+            self.history.record(EventType.PassStateExited, {"output": data, "name": stateName})
         elif stateType == "Choice":
+            self.history.record(EventType.ChoiceStateEntered, {"input": data, "name": stateName})
             nextState = self._runStateChoice(state, data)
+            self.history.record(EventType.ChoiceStateExited, {"output": data, "name": stateName})
         elif stateType == "Succeed":
+            self.history.record(EventType.SucceedStateEntered, {"input": data, "name": stateName})
+            self.history.record(EventType.SucceedStateExited, {"output": data, "name": stateName})
             pass
         elif stateType == "Fail":
+            self.history.record(EventType.FailStateEntered, {"input": data, "name": stateName})
             pass
         elif stateType == "Wait":
+            self.history.record(EventType.WaitStateEntered, {"input": data, "name": stateName})
+            self.history.record(EventType.WaitStateExited, {"output": data, "name": stateName})
             pass
         elif stateType == "Parallel":
             pass
