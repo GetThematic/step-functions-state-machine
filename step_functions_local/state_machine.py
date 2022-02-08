@@ -114,7 +114,10 @@ class StateMachine:
         elif stateType == "Pass":
             self.history.record(EventType.PassStateEntered, {"input": data, "name": stateName})
             newValue = self._runStatePass(state, data)
-            jsonpath.set_json_value(data, state.get("ResultPath"), newValue)
+            if not state.get("ResultPath"):
+                data = newValue
+            else:
+                jsonpath.set_json_value(data, state.get("ResultPath"), newValue)
             self.history.record(EventType.PassStateExited, {"output": data, "name": stateName})
         elif stateType == "Choice":
             self.history.record(EventType.ChoiceStateEntered, {"input": data, "name": stateName})
