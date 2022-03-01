@@ -101,7 +101,15 @@ class StateMachine:
             self.history.record(EventType.TaskStateEntered, {"input": data, "name": stateName})
             resource = self.resources.get(state["Resource"])
             if resource is None:
-                self.history.record(EventType.TaskSubmitFailed, {"resource": state["Resource"], "resourceType": state["Resource"], "error": "Unknown resource", "cause": "Unknown resource: {}".format(state["Resource"])})
+                self.history.record(
+                    EventType.TaskSubmitFailed,
+                    {
+                        "resource": state["Resource"],
+                        "resourceType": state["Resource"],
+                        "error": "Unknown resource",
+                        "cause": "Unknown resource: {}".format(state["Resource"]),
+                    },
+                )
                 raise Exception("Unknown resource: {}".format(state["Resource"]))
 
             newValue = self._runStateTask(state, data, resource)
@@ -144,15 +152,15 @@ class StateMachine:
         return RunStateResult(data, stateType, nextState, isTerminalState)
 
     def _runStateTask(self, state, data, resource):
-        dataInputPath = self.inputData(state, data)
-        result = resource(dataInputPath)
+        dataInput = self.inputData(state, data)
+        result = resource(dataInput)
         if not result:
             return None
         return copy.deepcopy(result)
 
     def _runStatePass(self, state, data):
-        dataInputPath = self.inputData(state, data)
-        return copy.deepcopy(state.get("Input", dataInputPath))
+        dataInput = self.inputData(state, data)
+        return copy.deepcopy(state.get("Input", dataInput))
 
     def _runStateChoice(self, state, data):
         matched = [x for x in state["Choices"] if choice_helper.isRightChoice(x, data)]
