@@ -60,7 +60,7 @@ class StateMachine:
             result = self._run(input, startAt, None)
             self.history.record(EventType.ExecutionSucceeded, {"output": result.data})
         except Exception as e:
-            self.history.record(EventType.ExecutionFailed, {"error": type(e), "cause": str(e)})
+            self.history.record(EventType.ExecutionFailed, {"error": str(type(e)), "cause": str(e)})
             raise e
         return result
 
