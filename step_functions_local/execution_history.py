@@ -115,8 +115,9 @@ EVENT_TYPE_TO_DETAILS_MAP = {
     EventType.TaskTimedOut: "taskTimedOutEventDetails",
     EventType.WaitStateAborted: None,
     EventType.WaitStateEntered: "stateEnteredEventDetails",
-    EventType.WaitStateExited: "stateExitedEventDetails"
+    EventType.WaitStateExited: "stateExitedEventDetails",
 }
+
 
 class ExecutionHistory(object):
     def __init__(self):
@@ -124,7 +125,7 @@ class ExecutionHistory(object):
 
     def reset(self):
         self.execution_history = []
-    
+
     def record(self, event_type, event_details, previous_event_id=None):
         event_detail_type = EVENT_TYPE_TO_DETAILS_MAP[event_type]
         # handle unknown previous event
@@ -133,13 +134,13 @@ class ExecutionHistory(object):
             if len(self.execution_history):
                 previous_event_id = self.execution_history[-1]["id"]
         details = {
-            "timestamp": datetime.now().timestamp(),
+            "timestamp": datetime.utcnow().timestamp(),
             "id": len(self.execution_history) + 1,
             "type": event_type.value,
-            "previousEventId": previous_event_id
+            "previousEventId": previous_event_id,
         }
         if event_detail_type:
-            details[event_detail_type] =  event_details
+            details[event_detail_type] = event_details
         self.execution_history.append(details)
 
     def export(self):
