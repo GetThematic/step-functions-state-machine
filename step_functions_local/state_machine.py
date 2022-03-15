@@ -60,7 +60,7 @@ class StateMachine:
             result = self._run(input, startAt, None)
             self.history.record(EventType.ExecutionSucceeded, {"output": result.data})
         except Exception as e:
-            self.history.record(EventType.ExecutionFailed, {"error": type(e), "cause": str(e)})
+            self.history.record(EventType.ExecutionFailed, {"error": str(type(e)), "cause": str(e)})
             raise e
         return result
 
@@ -122,9 +122,10 @@ class StateMachine:
         elif stateType == "Pass":
             self.history.record(EventType.PassStateEntered, {"input": data, "name": stateName})
             newValue = self._runStatePass(state, data)
-            resultPath = state.get("ResultPath")
-            if resultPath is not None:
-                jsonpath.set_json_value(data, resultPath, newValue)
+            if not state.get("ResultPath"):
+                data = newValue
+            else:
+                jsonpath.set_json_value(data, state.get("ResultPath"), newValue)
             self.history.record(EventType.PassStateExited, {"output": data, "name": stateName})
         elif stateType == "Choice":
             self.history.record(EventType.ChoiceStateEntered, {"input": data, "name": stateName})

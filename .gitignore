@@ -1,4 +1,5 @@
 env/
+build/
 .coverage
 .noseids
 coverage.xml
