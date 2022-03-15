@@ -134,7 +134,7 @@ class ExecutionHistory(object):
             if len(self.execution_history):
                 previous_event_id = self.execution_history[-1]["id"]
         details = {
-            "timestamp": datetime.now().timestamp(),
+            "timestamp": datetime.utcnow().timestamp(),
             "id": len(self.execution_history) + 1,
             "type": event_type.value,
             "previousEventId": previous_event_id,
