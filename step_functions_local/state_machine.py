@@ -55,10 +55,10 @@ class StateMachine:
         if not startAt:
             raise Exception("StartAt does not exist")
 
-        self.history.record(EventType.ExecutionStarted, {"input": input})
+        self.history.record(EventType.ExecutionStarted, {"input": copy.deepcopy(input)})
         try:
             result = self._run(input, startAt, None)
-            self.history.record(EventType.ExecutionSucceeded, {"output": result.data})
+            self.history.record(EventType.ExecutionSucceeded, {"output": copy.deepcopy(result.data)})
         except Exception as e:
             self.history.record(EventType.ExecutionFailed, {"error": str(type(e)), "cause": str(e)})
             raise e
@@ -98,7 +98,7 @@ class StateMachine:
         nextState = state.get("Next")
 
         if stateType == "Task":
-            self.history.record(EventType.TaskStateEntered, {"input": data, "name": stateName})
+            self.history.record(EventType.TaskStateEntered, {"input": copy.deepcopy(data), "name": stateName})
             resource = self.resources.get(state["Resource"])
             if resource is None:
                 self.history.record(
@@ -118,29 +118,29 @@ class StateMachine:
             else:
                 jsonpath.set_json_value(data, state.get("ResultPath"), newValue)
 
-            self.history.record(EventType.TaskStateExited, {"output": data, "name": stateName})
+            self.history.record(EventType.TaskStateExited, {"output": copy.deepcopy(data), "name": stateName})
         elif stateType == "Pass":
-            self.history.record(EventType.PassStateEntered, {"input": data, "name": stateName})
+            self.history.record(EventType.PassStateEntered, {"input": copy.deepcopy(data), "name": stateName})
             newValue = self._runStatePass(state, data)
             if not state.get("ResultPath"):
                 data = newValue
             else:
                 jsonpath.set_json_value(data, state.get("ResultPath"), newValue)
-            self.history.record(EventType.PassStateExited, {"output": data, "name": stateName})
+            self.history.record(EventType.PassStateExited, {"output": copy.deepcopy(data), "name": stateName})
         elif stateType == "Choice":
-            self.history.record(EventType.ChoiceStateEntered, {"input": data, "name": stateName})
+            self.history.record(EventType.ChoiceStateEntered, {"input": copy.deepcopy(data), "name": stateName})
             nextState = self._runStateChoice(state, data)
-            self.history.record(EventType.ChoiceStateExited, {"output": data, "name": stateName})
+            self.history.record(EventType.ChoiceStateExited, {"output": copy.deepcopy(data), "name": stateName})
         elif stateType == "Succeed":
-            self.history.record(EventType.SucceedStateEntered, {"input": data, "name": stateName})
-            self.history.record(EventType.SucceedStateExited, {"output": data, "name": stateName})
+            self.history.record(EventType.SucceedStateEntered, {"input": copy.deepcopy(data), "name": stateName})
+            self.history.record(EventType.SucceedStateExited, {"output": copy.deepcopy(data), "name": stateName})
             pass
         elif stateType == "Fail":
-            self.history.record(EventType.FailStateEntered, {"input": data, "name": stateName})
+            self.history.record(EventType.FailStateEntered, {"input": copy.deepcopy(data), "name": stateName})
             pass
         elif stateType == "Wait":
-            self.history.record(EventType.WaitStateEntered, {"input": data, "name": stateName})
-            self.history.record(EventType.WaitStateExited, {"output": data, "name": stateName})
+            self.history.record(EventType.WaitStateEntered, {"input": copy.deepcopy(data), "name": stateName})
+            self.history.record(EventType.WaitStateExited, {"output": copy.deepcopy(data), "name": stateName})
             pass
         elif stateType == "Parallel":
             pass
