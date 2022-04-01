@@ -189,7 +189,7 @@ class StateMachine:
 
     def resolveParameters(self, rawParameters, data):
         if type(rawParameters) == list:
-            return [self.resolveParameters(x, data) for x in rawParameters]
+            return [self.resolveParameters(x, data) if type(x) in {list, dict} else x for x in rawParameters]
         resolvedParameters = {}
 
         for key, rawValue in rawParameters.items():
