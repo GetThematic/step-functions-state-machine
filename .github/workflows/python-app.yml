@@ -34,10 +34,3 @@ jobs:
         run: |
           git tag -f stable
           git push -f origin stable
-      - name: Slack Send
-        uses: slackapi/slack-github-action@v1.15.0
-        with:
-          channel-id: #ci
-          slack-message: "Test message"
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
