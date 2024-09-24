@@ -1,5 +1,5 @@
 from enum import Enum
-from datetime import datetime
+import datetime
 
 
 class EventType(Enum):
@@ -134,7 +134,7 @@ class ExecutionHistory(object):
             if len(self.execution_history):
                 previous_event_id = self.execution_history[-1]["id"]
         details = {
-            "timestamp": datetime.utcnow().timestamp(),
+            "timestamp":  datetime.datetime.now(datetime.UTC).timestamp(),
             "id": len(self.execution_history) + 1,
             "type": event_type.value,
             "previousEventId": previous_event_id,
