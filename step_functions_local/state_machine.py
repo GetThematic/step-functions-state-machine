@@ -180,7 +180,7 @@ class StateMachine:
                 return state["Result"]
         elif state["Type"] == "Task":
             if "Input" in state:
-                return state["Input"]
+                return copy.deepcopy(state["Input"])
 
         if "Parameters" in state:
             rawParameters = state["Parameters"]
