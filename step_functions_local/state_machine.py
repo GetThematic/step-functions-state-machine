@@ -153,6 +153,12 @@ class StateMachine:
 
     def _runStateTask(self, state, data, resource):
         dataInput = self.inputData(state, data)
+        if isinstance(dataInput, dict) and isinstance(data, dict):
+            runtime_input = data.get("input")
+            if isinstance(runtime_input, dict):
+                for key, value in runtime_input.items():
+                    if key not in dataInput:
+                        dataInput[key] = value
         result = resource(dataInput)
         if not result:
             return None
