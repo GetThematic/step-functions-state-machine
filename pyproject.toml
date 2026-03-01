@@ -1,0 +1,21 @@
+[project]
+name = "step-functions-local"
+version = "1.0.0"
+description = "Local step functions execution"
+requires-python = ">=3.12"
+dependencies = [
+    "jsonschema==4.0.0",
+    "jsonpath-ng==1.5.3",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==8.3.3",
+    "coverage==4.3.4",
+    "flake8",
+    "black",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
